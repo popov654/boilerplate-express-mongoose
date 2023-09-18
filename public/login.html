@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>Login</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=cp1251'/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+        .wrapper {
+            margin: 100px auto;
+            max-width: 380px;
+            border: 1px solid #ccc;
+            padding: 12px;
+        }
+        .wrapper > div {
+            margin: 4px 0px;
+        }
+    </style>
+    <script src="js/secure-login.js"></script>
+    <script>
+        function sendCredentials() {
+            var username = document.getElementById('username').value
+            var password = document.getElementById('password').value
+            var token = encryptCredentials(username, password).then((token) => {
+               return fetch(scheme + origin + loginPath, {
+                   method: 'POST',
+                   headers: {
+                      'Authorization-Token': token
+                   }
+               });
+            })
+            .then(response => {
+               console.log('Session ID: ' + response.headers.get('Authorization'))
+               return response.json()
+            })
+            .then((result) => console.log(result));
+        }
+    </script>
+</head>
+<body>
+<div class="wrapper" style="text-align: center">
+    <div><input type="text" name="username" id="username" /></div>
+    <div><input type="text" name="password" id="password" /></div>
+    <div style="text-align: center"><button onclick="sendCredentials()">Login</button></div>
+</div>
+</body>
+</html>
