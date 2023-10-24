@@ -116,6 +116,8 @@ const Auth = {
                 session.lastAccess = Date.now();
                 await session.save();
                 next();
+            } else {
+                res.status(401).send({error: "Unauthorized"});
             }
         }
     },
