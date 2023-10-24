@@ -5,10 +5,12 @@ import mongoose from 'mongoose';
 import User from './model/user.js';
 import Session from './model/session.js';
 import db from './db.js';
+import files from './files.js';
 
 await db.connect();
 
 const SECURE_AUTH_ENABLED = true;
+const KEYS_EXPIRE_AFTER = -1;
 
 const Auth = {
     register: async (req, res, next) => {
@@ -54,6 +56,16 @@ const Auth = {
             if (username == null) {
                 res.status(404).send({error: "User not found"});
                 return false;
+            }
+        }
+        if (SECURE_AUTH_ENABLED && KEYS_EXPIRE_AFTER > 0) {
+            try {
+                let stats = files.getStats('pubkey');
+                if (Date.now() - KEYS_EXPIRE_AFTER < stats.createdAt) {
+                    generateKeys();
+                }
+            } catch (error) {
+                console.log(error.message);
             }
         }
         try {
@@ -133,8 +145,8 @@ const Auth = {
     }
 };
 
-function secureLogin(token) {
-    /*crypto.generateKeyPair('rsa', {
+function generateKeys() {
+    crypto.generateKeyPair('rsa', {
         modulusLength: 2048,
         publicKeyEncoding: {
             type: 'spki',
@@ -145,10 +157,17 @@ function secureLogin(token) {
             format: 'pem'
         }
     }, (err, publicKey, privateKey) => {
-        console.log(publicKey);
-        console.log(privateKey);
+        publicKey = publicKey.split('\n').slice(1, -2).join('');
+        privateKey = privateKey.split('\n').slice(1, -2).join('');
+        files.saveFile('pubkey', publicKey);
+        files.saveFile('privkey', privateKey);
+        console.log('Generating new key pair...');
+        //console.log('Public key: ' + publicKey);
+        //console.log('Private key: ' + privateKey);
     });
-    */
+}
+
+function secureLogin(token) {
 
     let key = '';
     try {
